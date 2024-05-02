@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoundScape</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="assets/img/logo.png" alt="Logo" class="logo">
+      <h1>SoundScape</h1>
+    </header>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Audio Source</h5>
+            <div class="mb-3">
+              <label for="source-select" class="form-label">Select Audio Source:</label>
+              <select id="source-select" class="form-select">
+                <option value="sample1">Sample 1</option>
+                <option value="sample2">Sample 2</option>
+                <option value="sample3">Sample 3</option>
+                <option value="sample4">Sample 4</option>
+                <option value="sample5">Sample 5</option>
+                <option value="mic">Live Microphone</option>
+                <option value="upload">Upload Audio File</option>
+              </select>
+            </div>
+            <div id="upload-container" class="mb-3" style="display: none;">
+              <label for="audio-upload" class="form-label">Upload Audio File:</label>
+              <input type="file" id="audio-upload" class="form-control" accept="audio/*">
+            </div>
+            <button id="play-pause" class="btn btn-primary">Play/Pause</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Effects</h5>
+            <ul class="nav nav-tabs" id="effect-tabs">
+              <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#reverb-tab">Reverb</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#delay-tab">Delay</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#distortion-tab">Distortion</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#filter-tab">Filter</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#pitch-tab">Pitch Shift</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#equalizer-tab">Equalizer</a>
+              </li>
+            </ul>
+            <div class="tab-content">
+              <div class="tab-pane fade show active" id="reverb-tab">
+                <div class="mb-3">
+                  <label for="reverb" class="form-label">Reverb:</label>
+                  <input type="range" id="reverb" class="form-range" min="0" max="100" value="0" step="1">
+                  <span id="reverb-value" class="form-text">0</span>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="delay-tab">
+                <div class="mb-3">
+                  <label for="delay" class="form-label">Delay:</label>
+                  <input type="range" id="delay" class="form-range" min="0" max="1" value="0" step="0.1">
+                  <span id="delay-value" class="form-text">0</span>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="distortion-tab">
+                <div class="mb-3">
+                  <label for="distortion" class="form-label">Distortion:</label>
+                  <input type="range" id="distortion" class="form-range" min="0" max="100" value="0" step="1">
+                  <span id="distortion-value" class="form-text">0</span>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="filter-tab">
+                <div class="mb-3">
+                  <label for="filter" class="form-label">Filter:</label>
+                  <input type="range" id="filter" class="form-range" min="20" max="20000" value="20000" step="1">
+                  <span id="filter-value" class="form-text">20000</span>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="pitch-tab">
+                <div class="mb-3">
+                  <label for="pitch" class="form-label">Pitch Shift:</label>
+                  <input type="range" id="pitch" class="form-range" min="-12" max="12" value="0" step="1">
+                  <span id="pitch-value" class="form-text">0</span>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="equalizer-tab">
+                <div id="equalizer-container"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-4">
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Visualizer</h5>
+            <canvas id="visualizer"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-4">
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Presets</h5>
+            <div class="mb-3">
+              <label for="preset-select" class="form-label">Select Preset:</label>
+              <select id="preset-select" class="form-select">
+                <option value="">-- Select Preset --</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="preset-name" class="form-label">Preset Name:</label>
+              <input type="text" id="preset-name" class="form-control" placeholder="Enter preset name">
+            </div>
+            <button id="save-preset" class="btn btn-primary">Save Preset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.2/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="effects/reverb.js"></script>
+  <script type="module" src="effects/delay.js"></script>
+  <script type="module" src="effects/distortion.js"></script>
+  <script type="module" src="effects/filter.js"></script>
+  <script type="module" src="effects/pitch-shifter.js"></script>
+  <script type="module" src="effects/equalizer.js"></script>
+  <script type="module" src="visualizer.js"></script>
+  <script type="module" src="scripts.js"></script>
+</body>
+</html>
