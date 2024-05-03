@@ -62,6 +62,31 @@ async function setupAudioGraph() {
 
   visualizer = createVisualizer(audioContext, gainNode);
   console.log("Connecting audio nodes...");
+  updateTimeCounter();
+}
+
+//Sample timer function
+function updateTimeCounter() {
+  const timeCounter = document.getElementById('time-counter');
+  if (source && source.buffer) {
+    const currentTime = audioContext.currentTime;
+    const duration = source.buffer.duration;
+    const minutes = Math.floor(currentTime / 60);
+    const seconds = Math.floor(currentTime % 60);
+    const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    timeCounter.textContent = `${formattedTime} / ${formatTime(duration)}`;
+  } else {
+    timeCounter.textContent = '00:00';
+  }
+
+  requestAnimationFrame(updateTimeCounter);
+}
+
+//another timer function 
+function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
 // Load audio buffer
