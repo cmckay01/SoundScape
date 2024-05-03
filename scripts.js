@@ -220,31 +220,37 @@ pitchControl.addEventListener('input', applyAudioEffects);
 // Event listener for the play/pause button
 playPauseButton.addEventListener('click', async function() {
   if (!audioContext) {
-      console.log("Initializing AudioContext...");
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      await setupAudioGraph();
+    console.log("Initializing AudioContext...");
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    await setupAudioGraph();
   }
 
   if (audioContext.state === 'suspended') {
-      console.log("Resuming suspended AudioContext...");
-      await audioContext.resume();
+    console.log("Resuming suspended AudioContext...");
+    await audioContext.resume();
   }
 
   // Ensure source is ready and buffer is loaded
   if (!source || !source.buffer) {
-      console.log("No audio source or buffer available. Loading buffer...");
-      await loadAudioBuffer('assets/audio/sample1.mp3'); // Ensure this path is correct and accessible
-      source.connect(audioContext.destination); // Connect source to destination if not already connected
+    console.log("No audio source or buffer available. Loading buffer...");
+    const selectedValue = sourceSelect.value;
+    if (selectedValue !== 'mic' && selectedValue !== 'upload') {
+      await loadAudioBuffer(`assets/audio/${selectedValue}.mp3`);
+      source.connect(gainNode); // Connect source to the gain node
+    } else {
+      console.log("No audio file selected.");
+      return;
+    }
   }
 
   if (source.started) {
-      console.log("Stopping audio playback...");
-      source.stop();
-      source.started = false;  // Resetting the flag
+    console.log("Stopping audio playback...");
+    source.stop();
+    source.started = false;  // Resetting the flag
   } else {
-      console.log("Starting audio playback...");
-      source.start(0);
-      source.started = true;  // Setting the flag to mark as started
+    console.log("Starting audio playback...");
+    source.start(0);
+    source.started = true;  // Setting the flag to mark as started
   }
 });
 
