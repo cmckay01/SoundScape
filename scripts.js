@@ -65,30 +65,6 @@ async function setupAudioGraph() {
   updateTimeCounter();
 }
 
-//Sample timer function
-function updateTimeCounter() {
-  const timeCounter = document.getElementById('time-counter');
-  if (source && source.buffer) {
-    const currentTime = audioContext.currentTime;
-    const duration = source.buffer.duration;
-    const minutes = Math.floor(currentTime / 60);
-    const seconds = Math.floor(currentTime % 60);
-    const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    timeCounter.textContent = `${formattedTime} / ${formatTime(duration)}`;
-  } else {
-    timeCounter.textContent = '00:00';
-  }
-
-  requestAnimationFrame(updateTimeCounter);
-}
-
-//another timer function 
-function formatTime(seconds) {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-}
-
 // Load audio buffer
 async function loadAudioBuffer(url) {
   console.log(`Loading audio buffer from URL: ${url}`);
@@ -98,15 +74,14 @@ async function loadAudioBuffer(url) {
   }
   const arrayBuffer = await response.arrayBuffer();
   try {
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      if (!source) {
-          source = audioContext.createBufferSource();
-          source.connect(audioContext.destination); // Ensure the source is connected
-      }
-      source.buffer = audioBuffer;
-      console.log("Audio buffer loaded and assigned to source.");
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    if (!source) {
+      source = audioContext.createBufferSource();
+    }
+    source.buffer = audioBuffer;
+    console.log("Audio buffer loaded and assigned to source.");
   } catch (error) {
-      console.error("Error decoding audio data:", error);
+    console.error("Error decoding audio data:", error);
   }
 }
 
@@ -138,12 +113,12 @@ function applyAudioEffects() {
   const pitchValue = parseFloat(pitchControl.value);
 
   // Update effect values
-  reverbNode.setParams({ seconds: reverbValue / 100 });
-  delayNode.setParams({ delayTime: delayValue });
-  distortionNode.setParams({ amount: distortionValue / 100 });
-  filterNode.setParams({ frequency: filterValue });
-  pitchShifterNode.setParams({ pitch: pitchValue });
-  equalizerNode.setParams(equalizerNode.getParams());
+  if (reverbNode) reverbNode.setParams({ seconds: reverbValue / 100 });
+  if (delayNode) delayNode.setParams({ delayTime: delayValue });
+  if (distortionNode) distortionNode.setParams({ amount: distortionValue / 100 });
+  if (filterNode) filterNode.setParams({ frequency: filterValue });
+  if (pitchShifterNode) pitchShifterNode.setParams({ pitch: pitchValue });
+  if (equalizerNode) equalizerNode.setParams(equalizerNode.getParams());
 
   // Update value displays
   document.getElementById('reverb-value').textContent = reverbValue;
@@ -181,7 +156,9 @@ function loadPreset() {
     distortionControl.value = preset.distortion;
     filterControl.value = preset.filter;
     pitchControl.value = preset.pitch;
-    equalizerNode.setParams(preset.equalizer);
+    if (equalizerNode) {
+      equalizerNode.setParams(preset.equalizer);
+    }
     applyAudioEffects();
   }
 }
@@ -261,7 +238,6 @@ playPauseButton.addEventListener('click', async function() {
     const selectedValue = sourceSelect.value;
     if (selectedValue !== 'mic' && selectedValue !== 'upload') {
       await loadAudioBuffer(`assets/audio/${selectedValue}.mp3`);
-      source.connect(gainNode); // Connect source to the gain node
     } else {
       console.log("No audio file selected.");
       return;
@@ -274,8 +250,16 @@ playPauseButton.addEventListener('click', async function() {
     source.started = false;  // Resetting the flag
   } else {
     console.log("Starting audio playback...");
+    source.connect(gainNode); // Connect source to the gain node
+    source.startTime = audioContext.currentTime; // Set the startTime property
     source.start(0);
     source.started = true;  // Setting the flag to mark as started
+    
+    source.onended = function() {
+      console.log("Audio playback ended.");
+      source.started = false;
+      cancelAnimationFrame(updateTimeCounter.animationFrameId);
+    };
   }
 });
 
@@ -287,3 +271,81 @@ savePresetButton.addEventListener('click', savePreset);
 document.addEventListener('DOMContentLoaded', () => {
   updatePresetOptions();
 });
+
+// Update time counter
+function updateTimeCounter() {
+  const timeCounter = document.getElementById('time-counter');
+  if (source && source.buffer && source.started) {
+    const currentTime = audioContext.currentTime - source.startTime;
+    const duration = source.buffer.duration;
+    const minutes = Math.floor(currentTime / 60);
+    const seconds = Math.floor(currentTime % 60);
+    const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    timeCounter.textContent = `${formattedTime} / ${formatTime(duration)}`;
+  } else {
+    timeCounter.textContent = '00:00';
+  }
+
+  updateTimeCounter.animationFrameId = requestAnimationFrame(updateTimeCounter);
+}
+
+function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+// Download the modified audio
+function downloadAudio() {
+  if (source && source.buffer) {
+    const audioBuffer = source.buffer;
+    const audioData = audioBuffer.getChannelData(0);
+    const dataview = encodeWAV(audioData, audioBuffer.sampleRate);
+    const audioBlob = new Blob([dataview], { type: 'audio/wav' });
+    const url = URL.createObjectURL(audioBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'modified_audio.wav';
+    link.click();
+  }
+}
+
+function encodeWAV(samples, sampleRate) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+
+  writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeString(view, 8, 'WAVE');
+  writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(view, 36, 'data');
+  view.setUint32(40, samples.length * 2, true);
+
+  floatTo16BitPCM(view, 44, samples);
+
+  return view;
+}
+
+function floatTo16BitPCM(output, offset, input) {
+  for (let i = 0; i < input.length; i++, offset += 2) {
+    const s = Math.max(-1, Math.min(1, input[i]));
+    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
+}
+
+function writeString(view, offset, string) {
+  for (let i = 0; i < string.length; i++) {
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
+}
+
+// Add download button event listener
+const downloadButton = document.getElementById('download-audio');
+downloadButton.addEventListener('click', downloadAudio);

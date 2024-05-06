@@ -6,6 +6,20 @@
   <title>SoundScape</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.2/css/bootstrap.min.css">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    header {
+      display: flex;
+      align-items: center;
+    }
+    
+    .logo {
+      margin-right: 10px;
+    }
+    
+    h1 {
+      margin: 0;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -122,6 +136,16 @@
           <div class="card-body">
             <h5 class="card-title">Audio Time Counter</h5>
             <p id="time-counter">00:00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-4">
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Download Modified Audio</h5>
+            <button id="download-audio" class="btn btn-primary">Download</button>
           </div>
         </div>
       </div>
