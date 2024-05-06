@@ -112,7 +112,6 @@ function applyAudioEffects() {
   const filterValue = parseFloat(filterControl.value);
   const pitchValue = parseFloat(pitchControl.value);
 
-  // Update effect values
   if (reverbNode) reverbNode.setParams({ seconds: reverbValue / 100 });
   if (delayNode) delayNode.setParams({ delayTime: delayValue });
   if (distortionNode) distortionNode.setParams({ amount: distortionValue / 100 });
@@ -120,7 +119,6 @@ function applyAudioEffects() {
   if (pitchShifterNode) pitchShifterNode.setParams({ pitch: pitchValue });
   if (equalizerNode) equalizerNode.setParams(equalizerNode.getParams());
 
-  // Update value displays
   document.getElementById('reverb-value').textContent = reverbValue;
   document.getElementById('delay-value').textContent = delayValue;
   document.getElementById('distortion-value').textContent = distortionValue;
@@ -295,12 +293,53 @@ function formatTime(seconds) {
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
+async function processAudio(audioBuffer) {
+  const offlineContext = new OfflineAudioContext(
+    audioBuffer.numberOfChannels,
+    audioBuffer.length,
+    audioBuffer.sampleRate
+  );
+
+  const source = offlineContext.createBufferSource();
+  source.buffer = audioBuffer;
+
+  const gainNode = offlineContext.createGain();
+  source.connect(gainNode);
+
+  const reverbNode = await createReverb(offlineContext);
+  const delayNode = await createDelay(offlineContext);
+  const distortionNode = await createDistortion(offlineContext);
+  const filterNode = await createFilter(offlineContext);
+  const pitchShifterNode = await createPitchShifter(offlineContext);
+  const equalizerNode = await createEqualizer(offlineContext, equalizerContainer);
+
+  gainNode.connect(reverbNode.input);
+  reverbNode.output.connect(delayNode.input);
+  delayNode.output.connect(distortionNode.input);
+  distortionNode.output.connect(filterNode.input);
+  filterNode.output.connect(pitchShifterNode.input);
+  pitchShifterNode.output.connect(equalizerNode.input);
+  equalizerNode.output.connect(offlineContext.destination);
+
+  // Apply effect parameters
+  reverbNode.setParams({ seconds: parseFloat(reverbControl.value) / 100 });
+  delayNode.setParams({ delayTime: parseFloat(delayControl.value) });
+  distortionNode.setParams({ amount: parseFloat(distortionControl.value) / 100 });
+  filterNode.setParams({ frequency: parseFloat(filterControl.value) });
+  pitchShifterNode.setParams({ pitch: parseFloat(pitchControl.value) });
+  equalizerNode.setParams(equalizerNode.getParams());
+
+  source.start();
+
+  return offlineContext.startRendering();
+}
+
 // Download the modified audio
-function downloadAudio() {
+async function downloadAudio() {
   if (source && source.buffer) {
-    const audioBuffer = source.buffer;
-    const audioData = audioBuffer.getChannelData(0);
-    const dataview = encodeWAV(audioData, audioBuffer.sampleRate);
+    const renderedBuffer = await processAudio(source.buffer);
+    const audioData = renderedBuffer.getChannelData(0);
+    const dataview = encodeWAV(audioData, renderedBuffer.sampleRate);
     const audioBlob = new Blob([dataview], { type: 'audio/wav' });
     const url = URL.createObjectURL(audioBlob);
     const link = document.createElement('a');
