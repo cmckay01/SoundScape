@@ -386,6 +386,14 @@ function writeString(view, offset, string) {
   }
 }
 
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+});
+
 // Add download button event listener
 const downloadButton = document.getElementById('download-audio');
 downloadButton.addEventListener('click', downloadAudio);

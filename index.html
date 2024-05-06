@@ -31,7 +31,7 @@
       <div class="col-md-4">
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Audio Source</h5>
+            <h5 class="card-title">Audio Source <span class="info-button" data-toggle="tooltip" title="Select an audio source or upload your own audio file. If you experience issues, try refreshing the page. !!!PLEASE NOTE: Audio starts out very distorted until you either use a preset or change one of the effects sliders!!!">?</span></h5>
             <div class="mb-3">
               <label for="source-select" class="form-label">Select Audio Source:</label>
               <select id="source-select" class="form-select">
@@ -48,14 +48,14 @@
               <label for="audio-upload" class="form-label">Upload Audio File:</label>
               <input type="file" id="audio-upload" class="form-control" accept="audio/*">
             </div>
-            <button id="play-pause" class="btn btn-primary">Play/Pause</button>
+            <button id="play-pause" class="btn btn-primary" data-toggle="tooltip" title="Please refer to Audio Source info button before play">Play/Stop</button>
           </div>
         </div>
       </div>
       <div class="col-md-8">
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Effects</h5>
+            <h5 class="card-title">Effects <span class="info-button" data-toggle="tooltip" title="Adjust the sliders to apply various audio effects to your sound. If the effects don't seem to be working, try stopping and restarting the audio playback.">?</span></h5>
             <ul class="nav nav-tabs" id="effect-tabs">
               <li class="nav-item">
                 <a class="nav-link active" data-bs-toggle="tab" href="#reverb-tab">Reverb</a>
@@ -124,7 +124,7 @@
       <div class="col">
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Visualizer</h5>
+            <h5 class="card-title">Visualizer <span class="info-button" data-toggle="tooltip" title="The visualizer displays the audio waveform. If the visualizer isn't working, try selecting a different audio source or refreshing the page.">?</span></h5>
             <canvas id="visualizer"></canvas>
           </div>
         </div>
@@ -134,7 +134,7 @@
       <div class="col">
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Audio Time Counter</h5>
+            <h5 class="card-title">Audio Time Counter <span class="info-button" data-toggle="tooltip" title="The audio time counter displays the current time and duration of the audio. If the counter isn't updating correctly, try refreshing the page.">?</span></h5>
             <p id="time-counter">00:00</p>
           </div>
         </div>
@@ -144,7 +144,7 @@
       <div class="col">
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Download Modified Audio</h5>
+            <h5 class="card-title">Download Modified Audio <span class="info-button" data-toggle="tooltip" title="Click the download button to save the modified audio with the applied effects. If the download doesn't work or the audio quality is poor, try adjusting the effect settings and downloading again.">?</span></h5>
             <button id="download-audio" class="btn btn-primary">Download</button>
           </div>
         </div>
@@ -154,7 +154,7 @@
       <div class="col">
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Presets</h5>
+            <h5 class="card-title">Presets <span class="info-button" data-toggle="tooltip" title="Save and load effect presets for quick access. If a preset doesn't load correctly, try adjusting the effect settings manually. Recommend creating 'Default' preset with all slider settings at 0.">?</span></h5>
             <div class="mb-3">
               <label for="preset-select" class="form-label">Select Preset:</label>
               <select id="preset-select" class="form-select">
