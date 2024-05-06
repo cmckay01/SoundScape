@@ -230,34 +230,33 @@ playPauseButton.addEventListener('click', async function() {
     await audioContext.resume();
   }
 
-  // Ensure source is ready and buffer is loaded
-  if (!source || !source.buffer) {
-    console.log("No audio source or buffer available. Loading buffer...");
-    const selectedValue = sourceSelect.value;
-    if (selectedValue !== 'mic' && selectedValue !== 'upload') {
-      await loadAudioBuffer(`assets/audio/${selectedValue}.mp3`);
-    } else {
-      console.log("No audio file selected.");
-      return;
-    }
-  }
-
-  if (source.started) {
+  // Check if the source is playing
+  if (source && source.started) {
     console.log("Stopping audio playback...");
     source.stop();
-    source.started = false;  // Resetting the flag
+    source.started = false; // Resetting the flag
+    cancelAnimationFrame(updateTimeCounter.animationFrameId); // Stop updating the time counter
   } else {
     console.log("Starting audio playback...");
-    source.connect(gainNode); // Connect source to the gain node
-    source.startTime = audioContext.currentTime; // Set the startTime property
+    if (!source.buffer) {
+      // If buffer is empty, load it
+      const selectedValue = sourceSelect.value;
+      await loadAudioBuffer(`assets/audio/${selectedValue}.mp3`);
+    }
+    source = audioContext.createBufferSource();
+    source.buffer = await audioContext.decodeAudioData(await (await fetch(`assets/audio/${sourceSelect.value}.mp3`)).arrayBuffer());
+    source.connect(gainNode); // Ensure all connections in the audio graph are made again
     source.start(0);
-    source.started = true;  // Setting the flag to mark as started
-    
+    source.started = true; // Setting the flag to mark as started
+    source.startTime = audioContext.currentTime; // Update start time for accurate timing
+
     source.onended = function() {
       console.log("Audio playback ended.");
       source.started = false;
-      cancelAnimationFrame(updateTimeCounter.animationFrameId);
+      cancelAnimationFrame(updateTimeCounter.animationFrameId); // Ensure to stop the time counter
+      updateTimeCounter(); // Update once more to show the end time
     };
+    updateTimeCounter(); // Start updating the time counter again
   }
 });
 
@@ -281,7 +280,8 @@ function updateTimeCounter() {
     const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     timeCounter.textContent = `${formattedTime} / ${formatTime(duration)}`;
   } else {
-    timeCounter.textContent = '00:00';
+    // Ensure that the counter shows zero when the audio is not playing
+    timeCounter.textContent = '00:00 / ' + formatTime(source.buffer.duration);
   }
 
   updateTimeCounter.animationFrameId = requestAnimationFrame(updateTimeCounter);
@@ -293,6 +293,7 @@ function formatTime(seconds) {
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
+//Takes the audio buffer and applies all the effects to it
 async function processAudio(audioBuffer) {
   const offlineContext = new OfflineAudioContext(
     audioBuffer.numberOfChannels,
