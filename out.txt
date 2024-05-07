@@ -1,0 +1,270 @@
+export function createDelay(audioContext) {
+    const delay = audioContext.createDelay(5.0);
+    const input = audioContext.createGain();
+    const output = audioContext.createGain();
+    const dry = audioContext.createGain();
+    const wet = audioContext.createGain();
+    const feedback = audioContext.createGain();
+  
+    input.connect(dry);
+    input.connect(wet);
+    wet.connect(delay);
+    delay.connect(feedback);
+    feedback.connect(delay);
+    feedback.connect(output);
+    dry.connect(output);
+  
+    const setParams = (params) => {
+      delay.delayTime.value = params.delayTime;
+      feedback.gain.value = params.delayTime;
+      wet.gain.value = params.delayTime;
+      dry.gain.value = 1 - params.delayTime;
+    };
+  
+    const getParams = () => ({
+      delayTime: delay.delayTime.value,
+    });
+  
+    return {
+      input,
+      output,
+      setParams,
+      getParams,
+    };
+  }export function createDistortion(audioContext) {
+    const distortion = audioContext.createWaveShaper();
+    const input = audioContext.createGain();
+    const output = audioContext.createGain();
+    const dry = audioContext.createGain();
+    const wet = audioContext.createGain();
+  
+    input.connect(dry);
+    input.connect(wet);
+    wet.connect(distortion);
+    distortion.connect(output);
+    dry.connect(output);
+  
+    const setParams = (params) => {
+      const amount = params.amount * 100;
+      const k = amount / 100;
+      const deg = Math.PI / 180;
+      const curve = new Float32Array(44100);
+      const x = 2 * k / (1 - k);
+  
+      for (let i = 0; i < 44100; i++) {
+        const a = i / 44100;
+        curve[i] = (1 + x) * a / (1 + x * Math.abs(a));
+      }
+  
+      distortion.curve = curve;
+      wet.gain.value = params.amount;
+      dry.gain.value = 1 - params.amount;
+    };
+  
+    const getParams = () => ({
+      amount: wet.gain.value,
+    });
+  
+    return {
+      input,
+      output,
+      setParams,
+      getParams,
+    };
+  }export function createEqualizer(audioContext, container) {
+  container.innerHTML = ''; // Clear the container before creating new bands
+
+  const frequencies = [100, 250, 500, 1000, 2000, 4000, 8000];
+  const filters = frequencies.map((frequency) => {
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'peaking';
+    filter.frequency.value = frequency;
+    filter.Q.value = 2;
+    filter.gain.value = 0;
+    return filter;
+  });
+
+  const input = audioContext.createGain();
+  const output = audioContext.createGain();
+
+  input.connect(filters[0]);
+  for (let i = 0; i < filters.length - 1; i++) {
+    filters[i].connect(filters[i + 1]);
+  }
+  filters[filters.length - 1].connect(output);
+
+  const bands = frequencies.map((frequency, index) => {
+    const band = document.createElement('div');
+    band.classList.add('band');
+
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.min = '-24';
+    input.max = '24';
+    input.value = '0';
+    input.step = '0.1';
+    input.id = `freq-${frequency}`;
+
+    const label = document.createElement('label');
+    label.textContent = `${frequency} Hz`;
+    label.htmlFor = input.id;
+
+    band.appendChild(label);
+    band.appendChild(input);
+    container.appendChild(band);
+
+    return input;
+  });
+
+  const setParams = (params) => {
+    params.bands.forEach((value, index) => {
+      const gainValue = Math.pow(10, value / 20);
+      filters[index].gain.value = gainValue;
+      bands[index].value = value;
+    });
+  };
+
+  const getParams = () => ({
+    bands: bands.map(band => parseFloat(band.value)),
+  });
+
+  let onParamsChange = () => {};
+
+  return {
+    input,
+    output,
+    setParams,
+    getParams,
+    onParamsChange: (callback) => {
+      onParamsChange = callback;
+    },
+  };
+}export function createFilter(audioContext) {
+    const filter = audioContext.createBiquadFilter();
+    const input = audioContext.createGain();
+    const output = audioContext.createGain();
+  
+    input.connect(filter);
+    filter.connect(output);
+  
+    const setParams = (params) => {
+      filter.type = 'lowpass';
+      filter.frequency.value = params.frequency;
+      filter.Q.value = 1;
+    };
+  
+    const getParams = () => ({
+      frequency: filter.frequency.value,
+    });
+  
+    return {
+      input,
+      output,
+      setParams,
+      getParams,
+    };
+  }class PitchShifterProcessor extends AudioWorkletProcessor {
+  static get parameterDescriptors() {
+    return [{
+      name: 'pitch',
+      defaultValue: 0,
+      minValue: -12,
+      maxValue: 12
+    }];
+  }
+
+  process(inputs, outputs, parameters) {
+    const input = inputs[0];
+    const output = outputs[0];
+    const pitch = parameters.pitch[0];
+
+    for (let channel = 0; channel < input.length; ++channel) {
+      const inputChannel = input[channel];
+      const outputChannel = output[channel];
+
+      for (let i = 0; i < inputChannel.length; ++i) {
+        outputChannel[i] = this.applyPitchShift(inputChannel[i], pitch);
+      }
+    }
+
+    return true;
+  }
+
+  applyPitchShift(sample, pitch) {
+    const pitchRatio = Math.pow(2, pitch / 12);
+    return sample * pitchRatio;
+  }
+}
+
+registerProcessor('pitch-shifter-processor', PitchShifterProcessor);export function createPitchShifter(audioContext) {
+  const workletUrl = 'effects/pitch-shifter-processor.js';
+  return audioContext.audioWorklet.addModule(workletUrl).then(() => {
+    const pitchShifterNode = new AudioWorkletNode(audioContext, 'pitch-shifter-processor');
+    const inputNode = audioContext.createGain();
+    const outputNode = audioContext.createGain();
+    const gainNode = audioContext.createGain(); // Add a gain node for controlling the output
+
+    inputNode.connect(pitchShifterNode);
+    pitchShifterNode.connect(gainNode);
+    gainNode.connect(outputNode);
+
+    return {
+      input: inputNode,
+      output: outputNode,
+      node: pitchShifterNode,
+      setParams: (params) => {
+        pitchShifterNode.parameters.get('pitch').setValueAtTime(params.pitch, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(params.gain || 1, audioContext.currentTime); // Set the gain value
+      },
+      getParams: () => ({
+        pitch: pitchShifterNode.parameters.get('pitch').value,
+        gain: gainNode.gain.value // Get the current gain value
+      })
+    };
+  });
+}export function createReverb(audioContext) {
+  const convolver = audioContext.createConvolver();
+  const seconds = 3;
+  const decay = 2;
+  const rate = audioContext.sampleRate;
+  const length = rate * seconds;
+  const impulse = audioContext.createBuffer(2, length, rate);
+  const left = impulse.getChannelData(0);
+  const right = impulse.getChannelData(1);
+
+  for (let i = 0; i < length; i++) {
+    const n = i / rate;
+    const e = Math.pow(1 - n / seconds, decay);
+    left[i] = (Math.random() * 2 - 1) * e;
+    right[i] = (Math.random() * 2 - 1) * e;
+  }
+
+  convolver.buffer = impulse;
+
+  const input = audioContext.createGain();
+  const output = audioContext.createGain();
+  const dry = audioContext.createGain();
+  const wet = audioContext.createGain();
+
+  input.connect(dry);
+  input.connect(wet);
+  wet.connect(convolver);
+  convolver.connect(output);
+  dry.connect(output);
+
+  const setParams = (params) => {
+    wet.gain.value = params.seconds;
+    dry.gain.value = 1 - params.seconds;
+  };
+
+  const getParams = () => ({
+    seconds: wet.gain.value,
+  });
+
+  return {
+    input,
+    output,
+    setParams,
+    getParams,
+  };
+}

@@ -1,4 +1,3 @@
-// pitch-shifter-processor.js
 class PitchShifterProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [{
