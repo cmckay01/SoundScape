@@ -119,18 +119,18 @@ if (!audioContext) {
 async function loadAudioFile(file) {
   const reader = new FileReader();
   reader.onload = async (event) => {
-      const arrayBuffer = event.target.result;
-      try {
-          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-          if (source) {
-              source.disconnect();  // Disconnect the existing source if it is connected
-          }
-          source = audioContext.createBufferSource();  // Create a new source
-          source.buffer = audioBuffer;
-          setupAudioGraph();  // Setup the audio graph with the new source
-      } catch (error) {
-          console.error("Error decoding audio data:", error);
+    const arrayBuffer = event.target.result;
+    try {
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      if (source) {
+        source.disconnect();
       }
+      source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      setupAudioGraph();
+    } catch (error) {
+      console.error("Error decoding audio data:", error);
+    }
   };
   reader.readAsArrayBuffer(file);
 }
