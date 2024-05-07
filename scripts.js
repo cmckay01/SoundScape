@@ -116,7 +116,7 @@ function applyAudioEffects() {
   if (delayNode) delayNode.setParams({ delayTime: delayValue });
   if (distortionNode) distortionNode.setParams({ amount: distortionValue / 100 });
   if (filterNode) filterNode.setParams({ frequency: filterValue });
-  if (pitchShifterNode) pitchShifterNode.setParams({ pitch: pitchValue });
+  if (pitchShifterNode) pitchShifterNode.setParams({ pitch: pitchValue, gain: 1 }); // Set the pitch and gain values
   if (equalizerNode) equalizerNode.setParams(equalizerNode.getParams());
 
   document.getElementById('reverb-value').textContent = reverbValue;
