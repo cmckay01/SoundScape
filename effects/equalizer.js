@@ -52,12 +52,12 @@ export function createEqualizer(audioContext, container) {
   });
 
   const setParams = (params) => {
-    console.log("Setting EQ Params:", params);
+    //console.log("Setting EQ Params:", params);
     params.bands.forEach((value, index) => {
       const gainValue = Math.pow(10, value / 20); // Convert dB to linear
       filters[index].gain.value = gainValue;
       bands[index].value = value; // Update the slider UI
-      console.log(`Band ${index + 1} (${frequencies[index]} Hz): ${gainValue}`);
+      //console.log(`Band ${index + 1} (${frequencies[index]} Hz): ${gainValue}`);
     });
   };
 

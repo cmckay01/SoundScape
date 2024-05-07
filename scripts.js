@@ -178,19 +178,7 @@ sourceSelect.addEventListener('change', async function() {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
-
-  if (this.value === 'mic') {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      source = audioContext.createMediaStreamSource(stream);
-      uploadContainer.style.display = 'none';
-      playPauseButton.textContent = 'Play/Pause';
-      playPauseButton.disabled = false;
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      alert('Failed to access the microphone. Please make sure you have granted permission.');
-    }
-  } else if (this.value === 'upload') {
+  if (this.value === 'upload') {
     uploadContainer.style.display = 'block';
     playPauseButton.textContent = 'Upload File';
     playPauseButton.disabled = true;
@@ -202,6 +190,24 @@ sourceSelect.addEventListener('change', async function() {
   }
   setupAudioGraph();
 });
+
+/*
+live microphone feature -- SCRAPPED
+
+if (this.value === 'mic') {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      source = audioContext.createMediaStreamSource(stream);
+      uploadContainer.style.display = 'none';
+      playPauseButton.textContent = 'Play/Pause';
+      playPauseButton.disabled = false;
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      alert('Failed to access the microphone. Please make sure you have granted permission.');
+    }
+  }
+
+*/
 
 
 audioUpload.addEventListener('change', function(event) {
