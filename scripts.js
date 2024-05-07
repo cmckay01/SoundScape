@@ -33,13 +33,24 @@ const savePresetButton = document.getElementById('save-preset');
 
 // Set up audio graph
 async function setupAudioGraph() {
+  // Create AudioContext if it doesn't already exist
   if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
 
+  // Disconnect existing connections if source and gainNode exist to prevent multiple connections
+  if (source) {
+      source.disconnect();
+  }
+  if (gainNode) {
+      gainNode.disconnect();
+  }
+
+  // Initialize source and gainNode
   source = audioContext.createBufferSource();
   gainNode = audioContext.createGain();
 
+  // Asynchronously create all effect nodes
   const reverbPromise = createReverb(audioContext);
   const delayPromise = createDelay(audioContext);
   const distortionPromise = createDistortion(audioContext);
@@ -47,10 +58,17 @@ async function setupAudioGraph() {
   const pitchShifterPromise = createPitchShifter(audioContext);
   const equalizerPromise = createEqualizer(audioContext, equalizerContainer);
 
-  // Wait for all nodes to be ready
-  [reverbNode, delayNode, distortionNode, filterNode, pitchShifterNode, equalizerNode] = await Promise.all([reverbPromise, delayPromise, distortionPromise, filterPromise, pitchShifterPromise, equalizerPromise]);
+  // Await all promises to ensure all audio nodes are ready before connecting them
+  [reverbNode, delayNode, distortionNode, filterNode, pitchShifterNode, equalizerNode] = await Promise.all([
+      reverbPromise,
+      delayPromise,
+      distortionPromise,
+      filterPromise,
+      pitchShifterPromise,
+      equalizerPromise
+  ]);
 
-  // Connect nodes
+  // Connect all nodes in the correct order
   source.connect(gainNode);
   gainNode.connect(reverbNode.input);
   reverbNode.output.connect(delayNode.input);
@@ -60,9 +78,13 @@ async function setupAudioGraph() {
   pitchShifterNode.output.connect(equalizerNode.input);
   equalizerNode.output.connect(audioContext.destination);
 
-  visualizer = createVisualizer(audioContext, gainNode);
-  console.log("Connecting audio nodes...");
-  updateTimeCounter();
+  // Check if visualizer is already set up, if not, set it up
+  if (!visualizer) {
+      visualizer = createVisualizer(audioContext, gainNode);
+  }
+
+  console.log("Audio nodes connected.");
+
 }
 
 // Load audio buffer
@@ -97,9 +119,18 @@ if (!audioContext) {
 async function loadAudioFile(file) {
   const reader = new FileReader();
   reader.onload = async (event) => {
-    const arrayBuffer = event.target.result;
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    source.buffer = audioBuffer;
+      const arrayBuffer = event.target.result;
+      try {
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          if (source) {
+              source.disconnect();  // Disconnect the existing source if it is connected
+          }
+          source = audioContext.createBufferSource();  // Create a new source
+          source.buffer = audioBuffer;
+          setupAudioGraph();  // Setup the audio graph with the new source
+      } catch (error) {
+          console.error("Error decoding audio data:", error);
+      }
   };
   reader.readAsArrayBuffer(file);
 }
@@ -277,6 +308,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Update time counter
 function updateTimeCounter() {
+  if (!source || !source.buffer) {
+    return; 
+  }
   const timeCounter = document.getElementById('time-counter');
   if (source && source.buffer && source.started) {
     const currentTime = audioContext.currentTime - source.startTime;
