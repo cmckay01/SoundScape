@@ -216,7 +216,7 @@ sourceSelect.addEventListener('change', async function() {
   } else {
     await loadAudioBuffer(`assets/audio/${this.value}.mp3`);
     uploadContainer.style.display = 'none';
-    playPauseButton.textContent = 'Play/Pause';
+    playPauseButton.textContent = 'Play/Stop';
     playPauseButton.disabled = false;
   }
   setupAudioGraph();
@@ -248,7 +248,7 @@ audioUpload.addEventListener('change', function(event) {
     const audioData = e.target.result;
     audioContext.decodeAudioData(audioData, function(buffer) {
       source.buffer = buffer;
-      playPauseButton.textContent = 'Play/Pause';
+      playPauseButton.textContent = 'Play/Stop';
       playPauseButton.disabled = false;
     });
   };
