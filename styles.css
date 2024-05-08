@@ -13,7 +13,50 @@ body {
 header {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: #2C2C2C;
+}
+
+header h1 {
+  margin: 0 20px;
+}
+
+.header-links {
+  display: flex;
+  gap: 20px;
+}
+
+.row {
+  margin-bottom: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.col-md-4,
+.col-md-8 {
+  padding: 0 15px;
+}
+
+.header-links a {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #1abc9c;
+  color: #1A1A1A;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.header-links a:hover {
+  background-color: #16a085;
+}
+
+.header-links a i {
+  margin-right: 5px;
 }
 
 .logo {
@@ -25,9 +68,14 @@ header {
 .card {
   background-color: #2C2C2C;
   margin-bottom: 20px;
+  height: 100%;
+  margin-top: 30px;
 }
 
-/*background-color: #00FFC3;*/
+.card-body {
+  padding: 20px;
+}
+
 .info-button {
   display: inline-flex;
   align-items: center;
@@ -45,10 +93,10 @@ header {
 }
 
 .info-text {
-  color: #FFFFFF; 
-  font-size: 12px; 
-  margin-left: 10px; 
-  vertical-align: middle; 
+  color: #FFFFFF;
+  font-size: 12px;
+  margin-left: 10px;
+  vertical-align: middle;
 }
 
 .card-title {
