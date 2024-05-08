@@ -243,9 +243,16 @@ if (this.value === 'mic') {
 
 audioUpload.addEventListener('change', function(event) {
   const file = event.target.files[0];
-  loadAudioFile(file);
-  playPauseButton.textContent = 'Play/Pause';
-  playPauseButton.disabled = false;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const audioData = e.target.result;
+    audioContext.decodeAudioData(audioData, function(buffer) {
+      source.buffer = buffer;
+      playPauseButton.textContent = 'Play/Pause';
+      playPauseButton.disabled = false;
+    });
+  };
+  reader.readAsArrayBuffer(file);
 });
 
 reverbControl.addEventListener('input', applyAudioEffects);
@@ -275,17 +282,23 @@ playPauseButton.addEventListener('click', async function() {
     cancelAnimationFrame(updateTimeCounter.animationFrameId); // Stop updating the time counter
   } else {
     console.log("Starting audio playback...");
-    if (!source.buffer) {
-      // If buffer is empty, load it
+    if (sourceSelect.value === 'upload' && source.buffer) {
+      // If a file is uploaded and the buffer is available
+      source.connect(gainNode);
+      source.start(0);
+      source.started = true;
+      source.startTime = audioContext.currentTime;
+    } else if (sourceSelect.value !== 'upload') {
+      // If no file is uploaded, load the selected audio file
       const selectedValue = sourceSelect.value;
       await loadAudioBuffer(`assets/audio/${selectedValue}.mp3`);
+      source = audioContext.createBufferSource();
+      source.buffer = await audioContext.decodeAudioData(await (await fetch(`assets/audio/${sourceSelect.value}.mp3`)).arrayBuffer());
+      source.connect(gainNode);
+      source.start(0);
+      source.started = true;
+      source.startTime = audioContext.currentTime;
     }
-    source = audioContext.createBufferSource();
-    source.buffer = await audioContext.decodeAudioData(await (await fetch(`assets/audio/${sourceSelect.value}.mp3`)).arrayBuffer());
-    source.connect(gainNode); // Ensure all connections in the audio graph are made again
-    source.start(0);
-    source.started = true; // Setting the flag to mark as started
-    source.startTime = audioContext.currentTime; // Update start time for accurate timing
 
     source.onended = function() {
       console.log("Audio playback ended.");
