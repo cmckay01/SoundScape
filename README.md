@@ -2,4 +2,4 @@
 
 video demo link: https://youtu.be/I0DJ_X704jw
 
-Test it out yourself: https://cmckay01.github.io/final-project-coms3430/
+try it out: https://cmckay01.github.io/final-project-coms3430/
